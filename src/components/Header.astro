@@ -7,25 +7,8 @@ const species = pathname.startsWith("/species/") ? pathname.replace("/species/",
   <div class="logo">My Data Viz</div>
   <nav>
     <a href="/" class={pathname === "/" ? "active" : ""}>Penguins</a>
-    <select id="species">
-      <option value="">-- Species --</option>
-      <option value="Adelie" selected={species === "Adelie"}>Adelie</option>
-      <option value="Chinstrap" selected={species === "Chinstrap"}>Chinstrap</option>
-      <option value="Gentoo" selected={species === "Gentoo"}>Gentoo</option>
-    </select>
   </nav>
 </header>
-
-<script>
-  document.querySelector("#species")?.addEventListener("change", (evt) => {
-    const value = (evt.target as HTMLSelectElement).value;
-    if (value) {
-      location.pathname = "/species/" + value;
-    } else {
-      location.pathname = "/";
-    }
-  });
-</script>
 
 <style>
   .navbar {

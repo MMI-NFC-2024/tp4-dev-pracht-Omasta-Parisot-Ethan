@@ -1,39 +1,178 @@
 ---
-import PlotFigure from "../components/PlotFigure.astro";
 import Layout from "../layouts/Layout.astro";
-import * as Plot from "@observablehq/plot";
-import penguins from "../assets/penguins.json";
 import Header from "../components/Header.astro";
 ---
 
 <Layout>
-  <Header />
-  <h1 class="text-2xl">Test Astro et Plot (Observablehq)</h1>
-  <PlotFigure
-    options={{
-      marks: [
-        Plot.rectY({length: 10000}, Plot.binX({y: "count"}, {x: Math.random})),
-      ],
-    }}
-  />
-  <div id="myplot"></div>
-<script>
+<Header />
+<h1 class="text-2xl">Graphique a barre simple</h1>
+<div id="myplot"></div>
+<script type="module">
 
-import * as Plot from "@observablehq/plot";
-import penguins from "../assets/penguins.json";
+import * as Plot from "https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6/+esm";
 
-
-const plot = Plot.plot({
-      marks: [
-        Plot.dot(penguins, {
-          x: "culmen_length_mm",
-          y: "culmen_depth_mm",
-          stroke: "species",
-        }),
-      ],
-    });
-const div = document.querySelector("#myplot")!;
+const plot = Plot.rectY({length: 10000}, Plot.binX({y: "count"}, {x: Math.random})).plot();
+const div = document.querySelector("#myplot");
 div.append(plot);
 
 </script>
-</Layout>
+  <h2 class="text-xl mt-8 mb-2">Graphique avec options de tris</h2>
+  <div style="display:flex;gap:1rem;align-items:center;margin:1rem 0;">
+    <label>Espèce 
+      <select id="species"><option value="">Toutes</option></select>
+    </label>
+    <label>Île 
+      <select id="island"><option value="">Toutes</option></select>
+    </label>
+    <label>Sexe 
+      <select id="sex"><option value="">Tous</option></select>
+    </label>
+    <button id="reset-penguins">Annuler</button>
+  </div>
+  <div id="chart-penguins" style="min-height:360px;border:1px solid #eee;padding:8px;"></div>
+
+  <script type="module">
+    import * as Plot from "https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6.17/+esm";
+
+    function uniqueSorted(arr) {
+      return Array.from(new Set(arr.filter(Boolean))).sort();
+    }
+
+    function populateSelect(selectEl, values, label) {
+      selectEl.innerHTML = "";
+      const opt0 = document.createElement("option");
+      opt0.value = "";
+      opt0.textContent = label;
+      selectEl.appendChild(opt0);
+      for (const v of values) {
+        const o = document.createElement("option");
+        o.value = v;
+        o.textContent = v;
+        selectEl.appendChild(o);
+      }
+    }
+
+    const speciesSelect = document.getElementById("species");
+    const islandSelect  = document.getElementById("island");
+    const sexSelect     = document.getElementById("sex");
+    const chartPenguins = document.getElementById("chart-penguins");
+    const resetPenguins = document.getElementById("reset-penguins");
+
+    let penguins = [];
+
+    async function initPenguins() {
+      try {
+        const res = await fetch("/data/penguins.json");
+        console.log("Status du fetch:", res.status);
+        penguins = await res.json();
+        console.log("Données chargées:", penguins);
+
+        populateSelect(speciesSelect, uniqueSorted(penguins.map(p => p.species)), "Toutes les espèces");
+        populateSelect(islandSelect,  uniqueSorted(penguins.map(p => p.island)), "Toutes les îles");
+        populateSelect(sexSelect,     uniqueSorted(penguins.map(p => p.sex)), "Tous les sexes");
+
+        speciesSelect.addEventListener("change", renderPenguins);
+        islandSelect.addEventListener("change", renderPenguins);
+        sexSelect.addEventListener("change", renderPenguins);
+        resetPenguins.addEventListener("click", () => {
+          speciesSelect.value = "";
+          islandSelect.value = "";
+          sexSelect.value = "";
+          renderPenguins();
+        });
+
+        renderPenguins();
+      } catch (e) {
+        console.error("Erreur lors du fetch:", e);
+        chartPenguins.textContent = "Erreur lors du chargement des données.";
+      }
+    }
+
+    function renderPenguins() {
+      const data = penguins
+        .filter(d => !speciesSelect.value || d.species === speciesSelect.value)
+        .filter(d => !islandSelect.value || d.island === islandSelect.value)
+        .filter(d => !sexSelect.value || d.sex === sexSelect.value)
+        .filter(d => d.culmen_length_mm && d.culmen_depth_mm);
+
+      console.log("Données affichées:", data);
+
+      chartPenguins.innerHTML = "";
+      if (!data.length) {
+        chartPenguins.textContent = "Aucun point à afficher.";
+        return;
+      }
+
+      const plot = Plot.plot({
+        width: 700,
+        height: 500,
+        x: {label:"Culmen length (mm)"},
+        y: {label:"Culmen depth (mm)"},
+        marks: [
+          Plot.dot(data, {
+            x: "culmen_length_mm",
+            y: "culmen_depth_mm",
+            stroke: "species",
+            r: 4,
+            title: d => `${d.species} — ${d.island} — ${d.sex}`
+          })
+        ]
+      });
+      chartPenguins.appendChild(plot);
+    }
+    initPenguins();
+  </script>
+
+  <style>
+  h1, h2 {
+    font-family: system-ui, sans-serif;
+    color: #111827; 
+    margin-bottom: 1rem;
+  }
+
+  select, button {
+    padding: 0.25rem 0.5rem;
+    font-weight: 500;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background: white;
+    color: #374151;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+  }
+
+  select:hover, button:hover {
+    border-color: #2563eb;
+    background-color: #f3f4f6;
+  }
+
+  button {
+    background: linear-gradient(90deg, #2563eb, #10b981);
+    color: white;
+    font-weight: 600;
+    border: none;
+  }
+
+  button:hover {
+    opacity: 0.9;
+  }
+
+  .filters {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin: 1rem 0;
+  }
+
+  #myplot, #chart-penguins {
+    min-height: 360px;
+    border: 1px solid #eee;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    background: white;
+  }
+</style>
+
+</Layout
+
