@@ -3,12 +3,27 @@ import PlotFigure from "../components/PlotFigure.astro";
 import Layout from "../layouts/Layout.astro";
 import * as Plot from "@observablehq/plot";
 import penguins from "../assets/penguins.json";
+import Header from "../components/Header.astro";
 ---
 
 <Layout>
+  <Header />
   <h1 class="text-2xl">Test Astro et Plot (Observablehq)</h1>
   <PlotFigure
     options={{
+      marks: [
+        Plot.rectY({length: 10000}, Plot.binX({y: "count"}, {x: Math.random})),
+      ],
+    }}
+  />
+  <div id="myplot"></div>
+<script>
+
+import * as Plot from "@observablehq/plot";
+import penguins from "../assets/penguins.json";
+
+
+const plot = Plot.plot({
       marks: [
         Plot.dot(penguins, {
           x: "culmen_length_mm",
@@ -16,6 +31,9 @@ import penguins from "../assets/penguins.json";
           stroke: "species",
         }),
       ],
-    }}
-  />
+    });
+const div = document.querySelector("#myplot")!;
+div.append(plot);
+
+</script>
 </Layout>

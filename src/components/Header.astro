@@ -1,0 +1,99 @@
+---
+const pathname = Astro.url.pathname;
+const species = pathname.startsWith("/species/") ? pathname.replace("/species/", "") : "";
+---
+
+<header class="navbar">
+  <div class="logo">My Data Viz</div>
+  <nav>
+    <a href="/" class={pathname === "/" ? "active" : ""}>Penguins</a>
+    <select id="species">
+      <option value="">-- Species --</option>
+      <option value="Adelie" selected={species === "Adelie"}>Adelie</option>
+      <option value="Chinstrap" selected={species === "Chinstrap"}>Chinstrap</option>
+      <option value="Gentoo" selected={species === "Gentoo"}>Gentoo</option>
+    </select>
+  </nav>
+</header>
+
+<script>
+  document.querySelector("#species")?.addEventListener("change", (evt) => {
+    const value = (evt.target as HTMLSelectElement).value;
+    if (value) {
+      location.pathname = "/species/" + value;
+    } else {
+      location.pathname = "/";
+    }
+  });
+</script>
+
+<style>
+  .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: white;
+    border-radius: 0 0 1rem 1rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-weight: 700;
+    font-size: 1.25rem;
+    background: linear-gradient(90deg, #2563eb, #10b981);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  nav {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  nav a {
+    text-decoration: none;
+    font-weight: 500;
+    color: #374151;
+    position: relative;
+    transition: color 0.2s ease;
+  }
+
+  nav a:hover {
+    color: #2563eb;
+  }
+
+  nav a.active {
+    color: #10b981;
+    font-weight: 600;
+  }
+
+  nav a.active::after {
+    content: "";
+    position: absolute;
+    bottom: -6px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    border-radius: 1px;
+    background: linear-gradient(90deg, #2563eb, #10b981);
+  }
+
+  select {
+    padding: 0.25rem 0.5rem;
+    font-weight: 500;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background: white;
+    color: #374151;
+    transition: border-color 0.2s ease;
+  }
+
+  select:hover {
+    border-color: #2563eb;
+  }
+</style>
